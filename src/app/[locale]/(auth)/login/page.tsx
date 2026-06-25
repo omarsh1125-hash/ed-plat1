@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Input, Label } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { getDictionary } from "@/i18n/getDictionary";
@@ -42,7 +42,14 @@ function LoginForm() {
       return;
     }
     const callback = search.get("callbackUrl");
-    router.push(callback || `/${locale}/dashboard`);
+    if (callback) {
+      router.push(callback);
+    } else {
+      // Route admins to the admin area, students to their dashboard.
+      const session = await getSession();
+      const isAdmin = session?.user?.role === "ADMIN";
+      router.push(`/${locale}/${isAdmin ? "admin" : "dashboard"}`);
+    }
     router.refresh();
   }
 

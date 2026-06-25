@@ -6,6 +6,7 @@ import { getCurrentSession } from "@/lib/session";
 import { getStudentEnrollments } from "@/lib/student";
 import { ButtonLink } from "@/components/ui/Button";
 import { ProgressBar, EmptyState, Badge } from "@/components/ui";
+import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { localized } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -33,14 +34,7 @@ export default async function MyCoursesPage({ params }: { params: { locale: Loca
             return (
               <div key={e.id} className="flex flex-col overflow-hidden rounded-2xl border border-ink-100 bg-white">
                 <div className="aspect-[16/9] bg-ink-100">
-                  {e.course.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={e.course.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-                      <BookOpen className="h-8 w-8 opacity-80" />
-                    </div>
-                  )}
+                  <CourseThumbnail src={e.course.thumbnailUrl} alt={localized(e.course, "title", locale)} iconClassName="h-8 w-8" />
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-2">

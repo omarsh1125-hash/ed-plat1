@@ -22,7 +22,10 @@ export default async function DashboardOverview({ params }: { params: { locale: 
     getStudentEnrollments(userId),
   ]);
 
-  const inProgress = enrollments.filter((e) => e.status !== "COMPLETED").slice(0, 3);
+  // The "My courses" grid shows the most recent enrollments regardless of
+  // status (completed courses included); the continue-learning banner targets
+  // an in-progress course specifically.
+  const recent = enrollments.slice(0, 3);
   const continueCourse = enrollments.find((e) => e.progress > 0 && e.status !== "COMPLETED");
 
   return (
@@ -70,13 +73,20 @@ export default async function DashboardOverview({ params }: { params: { locale: 
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {inProgress.map((e) => (
+            {recent.map((e) => (
               <Link
                 key={e.id}
                 href={`/${locale}/learn/${e.course.slug}`}
                 className="rounded-2xl border border-ink-100 bg-white p-5 transition hover:shadow-card"
               >
-                <h3 className="line-clamp-2 font-semibold">{localized(e.course, "title", locale)}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="line-clamp-2 font-semibold">{localized(e.course, "title", locale)}</h3>
+                  {e.status === "COMPLETED" && (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <CheckCircle2 className="h-3 w-3" /> {dict.dashboard.completed}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-4">
                   <div className="mb-1 flex justify-between text-xs text-ink-500">
                     <span>{dict.learn.progress}</span>

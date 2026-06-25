@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Clock, BarChart3, BookOpen } from "lucide-react";
+import { Clock, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui";
+import { CourseThumbnail } from "@/components/CourseThumbnail";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/getDictionary";
 import { localized, formatPrice, formatDuration } from "@/lib/utils";
@@ -48,18 +49,11 @@ export function CourseCard({
       className="group flex flex-col overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-soft"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-ink-100">
-        {course.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.thumbnailUrl}
-            alt={title}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-            <BookOpen className="h-10 w-10 opacity-80" />
-          </div>
-        )}
+        <CourseThumbnail
+          src={course.thumbnailUrl}
+          alt={title}
+          className="transition duration-300 group-hover:scale-105"
+        />
         <div className="absolute top-3 ltr:left-3 rtl:right-3">
           <Badge tone={course.isFree ? "green" : "brand"}>
             {course.isFree ? dict.common.free : formatPrice(course.price, course.currency, locale)}

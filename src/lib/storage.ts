@@ -41,7 +41,9 @@ function safeName(name: string): string {
 
 class LocalStorage implements Storage {
   driver = "local";
-  private dir = process.env.LOCAL_UPLOAD_DIR || "public/uploads";
+  // Stored outside `public/` because Next.js only serves public assets that
+  // exist at build time; runtime uploads are streamed via the /uploads route.
+  private dir = process.env.LOCAL_UPLOAD_DIR || "var/uploads";
   private baseUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "/uploads";
 
   async save(file: { buffer: Buffer; fileName: string; mimeType: string }) {

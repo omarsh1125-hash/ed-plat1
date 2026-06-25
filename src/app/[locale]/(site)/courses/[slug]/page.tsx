@@ -3,7 +3,6 @@ import {
   Clock,
   BarChart3,
   CheckCircle2,
-  PlayCircle,
   FileText,
   Award,
   User,
@@ -17,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Badge, ProgressBar } from "@/components/ui";
 import { EnrollButton } from "@/components/EnrollButton";
+import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { localized, formatPrice, formatDuration } from "@/lib/utils";
 import { lessonTypeIcon } from "@/lib/lessonMeta";
 
@@ -205,14 +205,7 @@ export default async function CourseDetailPage({
         <aside className="lg:col-span-1">
           <div className="sticky top-20 overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card">
             <div className="aspect-[16/9] bg-ink-100">
-              {course.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={course.thumbnailUrl} alt={title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-                  <PlayCircle className="h-12 w-12 opacity-80" />
-                </div>
-              )}
+              <CourseThumbnail src={course.thumbnailUrl} alt={title} iconClassName="h-12 w-12" />
             </div>
             <div className="p-5">
               <div className="flex items-baseline justify-between">

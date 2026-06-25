@@ -168,7 +168,7 @@ async function main() {
     descAr: "مسار متكامل وملائم للمبتدئين في تطوير الويب. ستتعلّم كيف يعمل الويب، وهيكلة الصفحات باستخدام HTML، وتنسيقها بـ CSS، وإضافة التفاعل باستخدام JavaScript — وتنتهي بمشروع صغير.",
     catSlug: "development", level: "BEGINNER", isFree: true, featured: true,
     instructor: "Omar Khaled",
-    thumbnail: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&q=80",
+    thumbnail: "/thumbnails/web-development-fundamentals.svg",
     objectives: [
       { en: "Understand how the web works", ar: "فهم كيفية عمل الويب" },
       { en: "Structure pages with semantic HTML", ar: "هيكلة الصفحات باستخدام HTML الدلالي" },
@@ -216,7 +216,7 @@ async function main() {
     descAr: "تعلّم مبادئ التصميم المتمحور حول المستخدم، من البحث والتخطيط الهيكلي إلى التصميم البصري والنماذج الأولية.",
     catSlug: "design", level: "INTERMEDIATE", isFree: false, price: 5900, featured: true,
     instructor: "Sara Ahmed",
-    thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80",
+    thumbnail: "/thumbnails/ui-ux-design-essentials.svg",
     objectives: [
       { en: "Apply user-centered design principles", ar: "تطبيق مبادئ التصميم المتمحور حول المستخدم" },
       { en: "Create wireframes and prototypes", ar: "إنشاء النماذج الهيكلية والأولية" },
@@ -255,7 +255,7 @@ async function main() {
     descAr: "من تحسين محركات البحث والمحتوى إلى وسائل التواصل والتحليلات، تعلّم كيف تجذب العملاء وتحوّلهم عبر الإنترنت.",
     catSlug: "marketing", level: "BEGINNER", isFree: true,
     instructor: "Layla Mansour",
-    thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+    thumbnail: "/thumbnails/digital-marketing-101.svg",
     objectives: [
       { en: "Understand the marketing funnel", ar: "فهم قمع التسويق" },
       { en: "Run basic SEO and content campaigns", ar: "تشغيل حملات أساسية لـ SEO والمحتوى" },
@@ -282,7 +282,7 @@ async function main() {
     descAr: "مقدمة عملية لتحليل البيانات: تحميل البيانات وتنظيفها واستكشافها وتمثيلها بصرياً باستخدام بايثون.",
     catSlug: "data", level: "ADVANCED", isFree: false, price: 7900,
     instructor: "Omar Khaled",
-    thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
+    thumbnail: "/thumbnails/data-analysis-with-python.svg",
     objectives: [
       { en: "Load and clean datasets", ar: "تحميل مجموعات البيانات وتنظيفها" },
       { en: "Explore data with pandas", ar: "استكشاف البيانات باستخدام pandas" },
