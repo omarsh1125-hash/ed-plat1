@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a2989;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink-50 text-ink-900 antialiased;
+    font-feature-settings: "kern";
+  }
+  /* RTL-aware logical spacing already handled by Tailwind's ms-/me- utilities. */
+  [dir="rtl"] body {
+    font-family: var(--font-arabic), system-ui, sans-serif;
+  }
+  h1, h2, h3, h4 {
+    @apply font-semibold tracking-tight text-ink-950;
+  }
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+}
+
+@layer components {
+  .container-px {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+  }
+  .card {
+    @apply rounded-2xl border border-ink-100 bg-white shadow-card;
+  }
+  .input-base {
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 disabled:opacity-60;
+  }
+  .label-base {
+    @apply mb-1.5 block text-sm font-medium text-ink-700;
+  }
+  .prose-rtl {
+    @apply leading-relaxed;
+  }
+}
+
+/* Smooth fade for content blocks. */
+.animate-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+/* Hide scrollbars on horizontal scrollers but keep functionality. */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Print styles for certificates. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+}

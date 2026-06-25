@@ -1,0 +1,426 @@
+// ============================================================================
+//  EduPlatform — Prisma schema (PostgreSQL)
+// ----------------------------------------------------------------------------
+//  Bilingual strategy: content that is shown to learners carries paired
+//  `*En` / `*Ar` columns (e.g. titleEn / titleAr). This keeps a single row per
+//  entity, makes admin editing simple ("English" + "Arabic" tabs in one form),
+//  and lets the UI pick the field for the active locale. JSON columns are used
+//  where the shape is flexible (objectives, quiz options, settings).
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+//  Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Locale {
+  EN
+  AR
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  VIDEO_UPLOAD // uploaded video file
+  VIDEO_EMBED // external embed (YouTube/Vimeo/etc.)
+  PDF
+  SLIDES // PowerPoint / Google Slides
+  DOCUMENT // Word / docs
+  IMAGE
+  TEXT // rich text / article
+  AUDIO
+  EXTERNAL_LINK
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  FREE
+}
+
+// ---------------------------------------------------------------------------
+//  Users & auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(STUDENT)
+  avatarUrl     String?
+  bio           String?
+  locale        Locale   @default(EN) // preferred UI language
+  emailVerified DateTime?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments        Enrollment[]
+  lessonProgress     LessonProgress[]
+  quizAttempts       QuizAttempt[]
+  certificates       Certificate[]
+  notes              Note[]
+  orders             Order[]
+  passwordResets     PasswordResetToken[]
+  coursesAuthored    Course[]            @relation("CourseAuthor")
+
+  @@index([role])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+//  Catalog: categories & courses
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  nameEn      String
+  nameAr      String
+  descEn      String?
+  descAr      String?
+  icon        String? // lucide icon name
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses Course[]
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  titleEn       String
+  titleAr       String
+  shortDescEn   String?
+  shortDescAr   String?
+  descriptionEn String       @default("")
+  descriptionAr String       @default("")
+  thumbnailUrl  String?
+  promoVideoUrl String?
+  level         CourseLevel  @default(BEGINNER)
+  status        CourseStatus @default(DRAFT)
+
+  // duration in minutes (informational; can also be derived from lessons)
+  durationMinutes Int @default(0)
+
+  instructorName String?
+
+  // Pricing — pricing model is "design-ready": amount in minor units (e.g. cents).
+  isFree   Boolean @default(true)
+  price    Int     @default(0) // minor units
+  currency String  @default("USD")
+
+  // Bilingual list content stored as JSON arrays of { en, ar } strings.
+  objectives   Json @default("[]")
+  requirements Json @default("[]")
+
+  featured     Boolean   @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+
+  author   User?   @relation("CourseAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorId String?
+
+  modules      Module[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  orders       Order[]
+  quizzes      Quiz[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([featured])
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  titleEn   String
+  titleAr   String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons Lesson[]
+
+  @@index([courseId])
+}
+
+model Lesson {
+  id        String     @id @default(cuid())
+  module    Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId  String
+  titleEn   String
+  titleAr   String
+  type      LessonType @default(VIDEO_EMBED)
+
+  // Primary content reference:
+  //  - VIDEO_EMBED / EXTERNAL_LINK -> contentUrl is the URL
+  //  - VIDEO_UPLOAD / PDF / etc.    -> contentUrl points at an uploaded file
+  //  - TEXT                         -> bodyEn / bodyAr hold rich text/markdown
+  contentUrl String?
+  bodyEn     String?  @db.Text
+  bodyAr     String?  @db.Text
+
+  durationMinutes Int     @default(0)
+  isPreview       Boolean @default(false) // viewable by guests/non-enrolled
+  order           Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments Attachment[]
+  progress    LessonProgress[]
+  quiz        Quiz?
+  notes       Note[]
+
+  @@index([moduleId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  String
+  titleEn   String
+  titleAr   String
+  url       String // uploaded file URL or external link
+  fileType  String? // mime / extension hint
+  sizeBytes Int?
+  isExternal Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([lessonId])
+}
+
+// ---------------------------------------------------------------------------
+//  Enrollment & progress
+// ---------------------------------------------------------------------------
+
+model Enrollment {
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  status    EnrollmentStatus @default(ACTIVE)
+  progress  Int              @default(0) // 0-100 cached percentage
+  lastLessonId String? // continue-learning pointer
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, lessonId])
+}
+
+// ---------------------------------------------------------------------------
+//  Quizzes
+// ---------------------------------------------------------------------------
+
+model Quiz {
+  id          String   @id @default(cuid())
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+  // A quiz may be attached to a specific lesson (lesson quiz) or stand alone.
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  lessonId    String?  @unique
+  titleEn     String
+  titleAr     String
+  descEn      String?
+  descAr      String?
+  passingScore Int     @default(70) // percentage required to pass
+  maxAttempts  Int     @default(0) // 0 = unlimited
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@index([courseId])
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId      String
+  type        QuestionType @default(MULTIPLE_CHOICE)
+  promptEn    String       @db.Text
+  promptAr    String       @db.Text
+  // options: JSON array of { id, en, ar }. For TRUE_FALSE two options are used.
+  options     Json         @default("[]")
+  // correctOptionIds: JSON array of option ids that are correct.
+  correctOptionIds Json    @default("[]")
+  explanationEn String?    @db.Text
+  explanationAr String?    @db.Text
+  points      Int          @default(1)
+  order       Int          @default(0)
+
+  @@index([quizId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  score     Int // percentage 0-100
+  passed    Boolean  @default(false)
+  // answers: JSON snapshot of { questionId: [selectedOptionIds] }
+  answers   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId, quizId])
+}
+
+// ---------------------------------------------------------------------------
+//  Certificates
+// ---------------------------------------------------------------------------
+
+model Certificate {
+  id            String   @id @default(cuid())
+  // Public, human-shareable verification code.
+  serial        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId      String
+  // Snapshot fields so certificates remain valid even if source data changes.
+  studentName   String
+  courseTitleEn String
+  courseTitleAr String
+  issuedAt      DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([serial])
+}
+
+// ---------------------------------------------------------------------------
+//  Payments / orders (design-ready stub, Stripe-compatible)
+// ---------------------------------------------------------------------------
+
+model Order {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  course        Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId      String
+  amount        Int // minor units charged
+  currency      String      @default("USD")
+  status        OrderStatus @default(PENDING)
+  provider      String      @default("stub") // "stub" | "stripe"
+  providerRef   String? // external payment/session id
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ---------------------------------------------------------------------------
+//  Uploaded files registry (for the storage abstraction / media library)
+// ---------------------------------------------------------------------------
+
+model UploadedFile {
+  id         String   @id @default(cuid())
+  key        String   @unique // storage key/path
+  url        String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  driver     String   @default("local")
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+//  Platform settings (single-row key/value style for admin-managed config)
+// ---------------------------------------------------------------------------
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
