@@ -30,10 +30,14 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
   const dir = getDirection(locale);
   const Arrow = dir === "rtl" ? Icons.ArrowLeft : ArrowRight;
 
+  // The landing page is statically generated, so it reads the DB at build time.
+  // Guard against a transient DB outage during the build (e.g. a cold preview
+  // database) so the deploy never hard-fails — the page degrades to empty
+  // sections and repopulates on the next render once the DB is reachable.
   const [featured, categories, stats] = await Promise.all([
-    getPublishedCourses({ take: 6 }),
-    getCategoriesWithCounts(),
-    getPlatformStats(),
+    getPublishedCourses({ take: 6 }).catch(() => []),
+    getCategoriesWithCounts().catch(() => []),
+    getPlatformStats().catch(() => ({ courses: 0, students: 0, certificates: 0 })),
   ]);
 
   const benefits = [

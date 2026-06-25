@@ -10,6 +10,18 @@ const prisma = new PrismaClient();
 const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 
 async function main() {
+  // Idempotency guard: skip seeding when the database is already populated so
+  // repeated deploys (the Vercel build runs this) don't wipe data the reviewer
+  // created. Set SEED_FORCE=1 to wipe and re-seed regardless. `db:reset` always
+  // re-seeds because it force-resets the schema first (no users remain).
+  if (process.env.SEED_FORCE !== "1") {
+    const existing = await prisma.user.count().catch(() => 0);
+    if (existing > 0) {
+      console.log(`🌱 Database already has ${existing} user(s) — skipping seed (set SEED_FORCE=1 to override).`);
+      return;
+    }
+  }
+
   console.log("🌱 Seeding database…");
 
   // Clean (order matters due to FKs; cascades handle children).
