@@ -7,7 +7,7 @@ import type { Role } from "@prisma/client";
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
-    signIn: "/en/login",
+    signIn: "/ar/login",
   },
   providers: [
     CredentialsProvider({

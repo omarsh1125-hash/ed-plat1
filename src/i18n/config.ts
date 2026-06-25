@@ -1,8 +1,10 @@
 export const locales = ["en", "ar"] as const;
 export type Locale = (typeof locales)[number];
 
+// Arabic-first: a fresh visitor with no cookie / non-Arabic Accept-Language
+// still lands on Arabic unless NEXT_PUBLIC_DEFAULT_LOCALE overrides it.
 export const defaultLocale: Locale =
-  (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as Locale) || "en";
+  (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as Locale) || "ar";
 
 export const localeDirection: Record<Locale, "ltr" | "rtl"> = {
   en: "ltr",
